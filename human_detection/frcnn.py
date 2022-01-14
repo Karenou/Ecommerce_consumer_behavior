@@ -51,7 +51,8 @@ class HumanDetection:
         self.opt = opt
         self.model = self.load_model()
         dataset = ImageDataset(self.opt.data_path)
-        print("There are %d images" % len(dataset))
+        self.n_images = len(dataset)
+        print("There are %d images" % self.n_images)
         self.data_loader = DataLoader(
             dataset, 
             batch_size=self.opt.batch_size, 
@@ -79,6 +80,7 @@ class HumanDetection:
 
             batch_no += 1
         
+        pred_label = pred_label[:self.n_images]
         print("save classification result to output path")
         result = pd.DataFrame(
             np.concatenate([image_ids.reshape(-1,1), pred_label.reshape(-1,1)], axis=1),  
