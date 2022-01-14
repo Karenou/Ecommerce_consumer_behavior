@@ -16,12 +16,9 @@ python frcnn.py --batch_size=32 --num_workers=6 --data_path="path to the data fo
 ```
 
 - Experiement Setting
-
-The following performance of Faster R-CNN is tested on a 6-core GPU at Microsoft Azure.
-
-    - Performance comparison across model
+    - Performance comparison across model, testing on CPU only
 <img src="result/model_comparison.png" width="450" height="400">
 
-    - Computation time of faster r-cnn across batch_size
+    - Computation time of faster r-cnn across batch_size, tested on a 6-core GPU at Microsoft Azure.
 <img src="result/frcnn_time.png" width="200" height="100">
 
