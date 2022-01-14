@@ -119,7 +119,7 @@ class HumanDetection:
         
         batch_pred_label = np.zeros(self.opt.batch_size)
         
-        for i in range(self.opt.batch_size):
+        for i in range(len(imgs)):
             for j in range(len(boxes[i])):
                 # filter class = 1 and confidence of the bbox > threshold
                 if classes[i][j] == 1 and scores[i][j] > conf_thres:
