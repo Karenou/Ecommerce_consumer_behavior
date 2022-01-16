@@ -32,7 +32,7 @@ In the forked repo, they used pretrain *Maximum of Margin Object Detection* mode
     - `--progress` as the number of images printed during model prediction progress.
 
 ```
-python predict.py --input_path="../HKTVMall_data" --input_csv="../human_detection/result/frcnn_result.csv" --face_path="detect_faces" --save_path="result/face_attributes.csv" --model_path="resnet_model/fairface_4race_20191111.pt" --face_size=300 --progress=20
+python predict.py --input_path="../HKTVMall_data" --input_csv="../human_detection/result/frcnn_result.csv" --face_path="detect_faces" --save_path="result/face_attributes.csv" --model_path="res34_fair_align_multi_4_20190809.pt" --face_size=300 --progress=20
 ```
 
 - Performance on subset of images
