@@ -28,7 +28,7 @@ class SimpleFolderDataset(data.Dataset):
         self.aspect_ratio = input_size[1] * 1.0 / input_size[0]
         self.input_size = np.asarray(input_size)
 
-        # only filter the images that contain human body
+        # filter the images that contain human body
         if filter is not None:
             res = pd.read_csv(filter)
             image_ids = res[res["pred_label"] == 1]["image_id"]
