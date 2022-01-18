@@ -14,3 +14,8 @@
 
 2. Then start bmi prediction using the `bmi_prediction.ipynb`
 
+The production code is written in `bmi_prediction.py`. To run the program, run the following command in terminal.
+
+```
+python bmi_prediction.py --input_csv="../human_detection/result/frcnn_result.csv" --image_path="../../HKTVMall_data" --process_image_path="process_images" --model_path="model/4.053_model.h5"
+```
