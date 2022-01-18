@@ -70,7 +70,7 @@ class HumanDetection:
         
         for _ids, imgs in self.data_loader:
             print("Batch %d" % batch_no)
-            batch_pred_label = self.predict(imgs, conf_thres=0.7)
+            batch_pred_label = self.predict(imgs, conf_thres=0.7, pct_area_thres=0.1)
 
             if image_ids is None or pred_label is None:
                 image_ids, pred_label = _ids.numpy(), batch_pred_label
@@ -86,6 +86,7 @@ class HumanDetection:
             np.concatenate([image_ids.reshape(-1,1), pred_label.reshape(-1,1)], axis=1),  
             columns=["image_id", "pred_label"]
         )
+        result = result.sort_values("image_id")
         result.to_csv(self.opt.output_path, index=False)
 
         end = time.time()
@@ -104,7 +105,7 @@ class HumanDetection:
         model.eval()
         return model
 
-    def predict(self, imgs, conf_thres=0.7) -> np.array:
+    def predict(self, imgs, conf_thres=0.7, pct_area_thres=0.1) -> np.array:
         """
         predict the image contains human 
         when the confidence of bounding box that classifies 'person' > conf_threshold 
@@ -125,10 +126,9 @@ class HumanDetection:
             for j in range(len(boxes[i])):
                 # filter class = 1 and confidence of the bbox > threshold
                 if classes[i][j] == 1 and scores[i][j] > conf_thres:
-                    # filter pct_area > 0.05
                     area = (boxes[i][j][3] - boxes[i][j][1]) * (boxes[i][j][2] - boxes[i][j][0])
                     pct_area = area / (imgs[i].shape[1] * imgs[i].shape[2])
-                    if pct_area > 0.05:
+                    if pct_area > pct_area_thres:
                         batch_pred_label[i] = 1
 
         return batch_pred_label
@@ -140,6 +140,8 @@ if __name__ == "__main__":
     parser.add_argument("--num_workers", type=int, default=2, help="Number of workers")
     parser.add_argument("--data_path", type=str, help="Path to save the images")
     parser.add_argument("--output_path", type=str, help="Path to save the classification result")
+    parser.add_argument("--conf_thres", type=float, default=0.7, help="Confidence threshold to filter bounding box")
+    parser.add_argument("--pct_area_thres", type=float, default=0.1, help="Threshold to filter size of bounding box")
     opt = parser.parse_args()
 
     model = HumanDetection(opt)
