@@ -12,7 +12,7 @@ We tried several pre-trained models including YOLOv3, human parsing (semantic se
 
 - How to Run the Program
 ```
-python frcnn.py --batch_size=32 --num_workers=6 --data_path="path to the data folder" --output_path="frcnn_result.csv" --conf_thres=0.7 --pct_area_thres=0.15
+python frcnn.py --batch_size=32 --num_workers=6 --data_path="path to the data folder" --output_path="result/frcnn_result.csv" --conf_thres=0.7 --pct_area_thres=0.15
 ```
 
 - Experiement Setting
