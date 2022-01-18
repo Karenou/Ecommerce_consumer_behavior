@@ -70,7 +70,11 @@ class HumanDetection:
         
         for _ids, imgs in self.data_loader:
             print("Batch %d" % batch_no)
-            batch_pred_label = self.predict(imgs, conf_thres=0.7, pct_area_thres=0.1)
+            batch_pred_label = self.predict(
+                imgs, 
+                conf_thres=self.opt.conf_thres, 
+                pct_area_thres=self.opt.pct_area_thres
+            )
 
             if image_ids is None or pred_label is None:
                 image_ids, pred_label = _ids.numpy(), batch_pred_label
