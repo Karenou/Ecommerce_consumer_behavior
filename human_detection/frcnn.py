@@ -1,5 +1,6 @@
 import torch
 from torch.utils.data import Dataset, DataLoader 
+from torch.utils.data.dataloader import default_collate
 import torchvision
 import cv2
 
@@ -34,14 +35,17 @@ class ImageDataset(Dataset):
         img_id, img_path = self.images[index]
 
         img = cv2.imread(img_path)
-        # resize to (C, H, W)
-        img = cv2.resize(img, (img.shape[1], img.shape[0]))
-        # resize to the same shape to load the data by batch
-        img = cv2.resize(img, (1200, 1200))
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        img = self.transform(img)
-        return img_id, img
-
+        # handle corrupted images
+        if img is None:
+            return None
+        else:
+            # resize to (C, H, W)
+            img = cv2.resize(img, (img.shape[1], img.shape[0]))
+            # resize to the same shape to load the data by batch
+            img = cv2.resize(img, (1200, 1200))
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            img = self.transform(img)
+            return img_id, img
 
 
 class HumanDetection:
@@ -53,10 +57,17 @@ class HumanDetection:
         dataset = ImageDataset(self.opt.data_path)
         self.n_images = len(dataset)
         print("There are %d images" % self.n_images)
+
+        # filter corrupted images
+        def collate_fn(batch):
+            batch = filter(lambda img: img is not None, batch)
+            return default_collate(list(batch))
+
         self.data_loader = DataLoader(
             dataset, 
             batch_size=self.opt.batch_size, 
-            num_workers=self.opt.num_workers, shuffle=False, drop_last=False
+            num_workers=self.opt.num_workers, shuffle=False, drop_last=False,
+            collate_fn=collate_fn
         )
 
     def run(self):
