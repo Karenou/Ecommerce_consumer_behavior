@@ -1,44 +1,30 @@
 # README
 
-## Human Face Recognition and Facial Attributes Extraction
+## FairFace
+- Reference:
+
+This repo is cloned from [**FairFace: Face Attribute Dataset for Balanced Race, Gender, and Age for Bias Measurement and Mitigation**](https://github.com/dchen236/FairFace). We modified the code slightly for actual deployment and production purpose.
+
+- Usage
+
+Use to extract facial attributes including age, gender and race. But after applying the pretrained model on own dataset, we found that the age prediction is incorrect. So we use the face detection and analytics api service provided by Face++
+
+## Face ++
 
 - Reference
 
-This repo is forked from [**FairFace: Face Attribute Dataset for Balanced Race, Gender, and Age for Bias Measurement and Mitigation**](https://github.com/dchen236/FairFace). We modified the code slightly for actual deployment and production purpose.
+This repo is cloned from [**FacePlusPlus Python SDK**](https://github.com/FacePlusPlus/facepp-python-sdk). We modified the `call.py` and `facepp.py` accordingly for actual deployment and production purpose.
 
-- Required packages
-    - pytorch1.10
-    - dlib
-    - numpy, pandas
+- Usage
 
-- Model Architecture
+We extract the facial attributes including gender, age, female_score and male_score with the help of Face++ API.
 
-    -  **Face recognition**:
-In the forked repo, they used pretrain *Maximum of Margin Object Detection* model in dlib for face recognition.
+- How to run the SDK
 
-    - **Facial attribute extraction**: In the forked repo, they trained a model using ResNet34 as backbone for facial attribute extraction. However, no further details about the model is disclosed in the [original paper](https://openaccess.thecvf.com/content/WACV2021/papers/Karkkainen_FairFace_Face_Attribute_Dataset_for_Balanced_Race_Gender_and_Age_WACV_2021_paper.pdf).
+1. First need to input the api_key and api_secret in `facecpp.py`. Since we sign up a free account in the EN website, also need to change the server url in `facecpp.py` to `'https://api-us.faceplusplus.com'`
 
-- How to Run the Program
-
-1. First need to download the pretrain model [here](https://drive.google.com/drive/folders/1F_pXfbzWvG-bhCpNsRj6F_xsdjpesiFu) and put them under the `FairFace/resnet_model` folder. 
-
-2. Then run the following command in terminal, specifying:
-    - `--input_path` as base path to store the input images
-    - `--input_csv` as the path of Faster R-CNN prediction result of human body
-    - `--face_path` as the path to store the detected human face images
-    - `--save_path` as the path to store model output `face_attributes.csv`
-    - `--model_path` as the path to the chosen resnet model
-    - `--face_size` as the size of cropped human face
-    - `--progress` as the number of images printed during model prediction progress.
+2. In `call.py`, we upload images from local folder and save the returned resul in csv format. Run the following command.
 
 ```
-python predict.py --input_path="../HKTVMall_data" --input_csv="../human_detection/result/frcnn_result.csv" --face_path="detect_faces" --save_path="result/face_attributes.csv" --model_path="res34_fair_align_multi_4_20190809.pt" --face_size=300 --progress=20
+python3 facepp-python-sdk-master/call.py
 ```
-
-- Performance on subset of images
-
-We first tested the model performance on a subset of 463 images.
-
-<img src="FairFace/result/performance.png" width="450" height="100">
-
-
