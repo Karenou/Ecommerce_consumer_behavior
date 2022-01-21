@@ -77,8 +77,10 @@ class HumanDetection:
 
         print("CUDA available: %s" % torch.cuda.is_available())
         if self.opt.use_cuda == -1:
+            print("use cpu")
             device = torch.device("cpu")
         else:
+            print("use cuda: %d" % self.opt.use_cuda)
             device = torch.device("cuda:%d" % (self.opt.use_cuda))
         
         print("load faster r-cnn model")
@@ -107,7 +109,8 @@ class HumanDetection:
 
             batch_no += 1
         
-        pred_label = pred_label[:self.n_images]
+        # drop corrupted images
+        pred_label = pred_label[:len(image_ids)]
         print("save classification result to output path")
         result = pd.DataFrame(
             np.concatenate([image_ids.reshape(-1,1), pred_label.reshape(-1,1)], axis=1),  
@@ -172,7 +175,7 @@ class HumanDetection:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--use_cuda", type=int, default=-1, help="-1 not use cuda, otherwise is the cuda idx, from 0 to 3")
+    parser.add_argument("--use_cuda", type=int, default=0, help="-1 not use cuda, otherwise is the cuda idx, from 0 to 3")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size for dataloader")
     parser.add_argument("--num_workers", type=int, default=2, help="Number of workers")
     parser.add_argument("--data_path", type=str, help="Path to save the images")

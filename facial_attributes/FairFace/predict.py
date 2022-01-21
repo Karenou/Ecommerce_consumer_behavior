@@ -98,8 +98,9 @@ def index_to_category_name(result, col_name, feat_name, num_categories, name_lis
         result.loc[result[col_name] == index, feat_name] = name
     return result
 
-def predict_age_gender_race(save_path, model_path, num_races=4, imgs_path = 'detected_faces/', progress=10):
+def predict_age_gender_race(use_cuda, save_path, model_path, num_races=4, imgs_path = 'detected_faces/', progress=10):
     """
+    @param use_cuda: -1 for not use GPU, otherwise specify which cuda
     @param save_path: path to save prediction result csv
     @param model_path: path of pretrained model
     @param num_races: 4 or 7, decide which model to use
@@ -107,7 +108,7 @@ def predict_age_gender_race(save_path, model_path, num_races=4, imgs_path = 'det
     @param progress: print out progress per n images
     """
     img_names = [os.path.join(imgs_path, x) for x in os.listdir(imgs_path) if "jpg" in x]
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:%d" % use_cuda if torch.cuda.is_available() and use_cuda != -1 else "cpu")
 
     model = torchvision.models.resnet34(pretrained=True)
     model.fc = nn.Linear(model.fc.in_features, 18)
@@ -225,11 +226,16 @@ if __name__ == "__main__":
     parser.add_argument("--num_races", default=4, type=int, help="Number of races")
     parser.add_argument("--model_path", type=str, help="Path to load the pretrain model")
     parser.add_argument("--progress", default=20, type=int, help="Print progress for every n images")
-    parser.add_argument("--use_cuda", default=True, type=bool, help="Whether to use GPU")
+    parser.add_argument("--use_cuda", type=int, default=0, help="-1 not use cuda, otherwise is the cuda idx, from 0 to 3")
     args = parser.parse_args()
 
-    dlib.DLIB_USE_CUDA = args.use_cuda
-    print("using CUDA: %s" % dlib.DLIB_USE_CUDA)
+    print("torch CUDA available: %s" % torch.cuda.is_available())
+    if args.use_cuda == -1:
+        dlib.DLIB_USE_CUDA = False
+        print("use cpu")
+    else:
+        dlib.DLIB_USE_CUDA = True
+        print("using CUDA:%d" % args.use_cuda)
     
     ensure_dir(args.face_path)
 
@@ -241,7 +247,7 @@ if __name__ == "__main__":
     detect_face(args.input_path, img_ids, args.face_path, size=args.face_size, progress=args.progress)
 
     print("predicting age, gender and race")
-    predict_age_gender_race(args.save_path, args.model_path, num_races=args.num_races, imgs_path=args.face_path + '/', progress=args.progress)
+    predict_age_gender_race(args.use_cuda, args.save_path, args.model_path, num_races=args.num_races, imgs_path=args.face_path + '/', progress=args.progress)
 
     end = time.time()
     print("Total time used: %.4f" % (end-start))
