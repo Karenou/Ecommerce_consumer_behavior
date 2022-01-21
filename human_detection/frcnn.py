@@ -51,9 +51,7 @@ class ImageDataset(Dataset):
 class HumanDetection:
 
     def __init__(self, opt):
-        print("load the faster r-cnn model")
         self.opt = opt
-        self.model = self.load_model()
         dataset = ImageDataset(self.opt.data_path)
         self.n_images = len(dataset)
         print("There are %d images" % self.n_images)
@@ -76,12 +74,26 @@ class HumanDetection:
         """
 
         start = time.time()
+
+        print("CUDA available: %s" % torch.cuda.is_available())
+        if self.opt.use_cuda == -1:
+            device = torch.device("cpu")
+        else:
+            device = torch.device("cuda:%d" % (self.opt.use_cuda))
+        
+        print("load faster r-cnn model")
+        model = self.load_model(device)
+
         print("start classification by batch")
         image_ids, pred_label, batch_no = None, None, 0
         
         for _ids, imgs in self.data_loader:
-            print("Batch %d" % batch_no)
+            if batch_no % 50 == 0:
+                print("Batch %d" % batch_no)
+
             batch_pred_label = self.predict(
+                device,
+                model,
                 imgs, 
                 conf_thres=self.opt.conf_thres, 
                 pct_area_thres=self.opt.pct_area_thres
@@ -107,9 +119,10 @@ class HumanDetection:
         end = time.time()
         print("Total time used: %.2f sec" % (end-start))
 
-    def load_model(self, pretrained=True, model_save_path=None):
+    def load_model(self, device, pretrained=True, model_save_path=None):
         """
         load pretrain Faster R-CNN model
+        @param device: cuda:0 or cpu
         @param pretrained: whether the model is pretrained or not
         @param model_save_path: path where the model is saved
         return: downloaded model
@@ -117,23 +130,31 @@ class HumanDetection:
         model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=pretrained, progress=False)
         if model_save_path:
             model.load_state_dict(torch.load(model_save_path))
+        model = model.to(device)
         model.eval()
         return model
 
-    def predict(self, imgs, conf_thres=0.7, pct_area_thres=0.1) -> np.array:
+    def predict(self, device, model, imgs, conf_thres=0.7, pct_area_thres=0.1) -> np.array:
         """
         predict the image contains human 
         when the confidence of bounding box that classifies 'person' > conf_threshold 
         and the percentage of area of bounding box is > 5% of the image shape
+        @param device: cuda:0 or cpu
+        @param model: pretrain model
         @param imgs: batch of images
         @param conf_thres: confidence threshold to filter bounding boxes
         return the batch predicted label as numpy array
         """
-        pred = self.model(imgs)
+        pred = model(imgs.to(device))
         
-        boxes = [pred[i]["boxes"].detach().numpy() for i in range(len(imgs))]
-        classes = [pred[i]["labels"].numpy() for i in range(len(imgs))]
-        scores = [pred[i]["scores"].detach().numpy() for i in range(len(imgs))]
+        if self.opt.use_cuda != -1:
+            boxes = [pred[i]["boxes"].cpu().detach().numpy() for i in range(len(imgs))]
+            classes = [pred[i]["labels"].cpu().numpy() for i in range(len(imgs))]
+            scores = [pred[i]["scores"].cpu().detach().numpy() for i in range(len(imgs))]
+        else:
+            boxes = [pred[i]["boxes"].detach().numpy() for i in range(len(imgs))]
+            classes = [pred[i]["labels"].numpy() for i in range(len(imgs))]
+            scores = [pred[i]["scores"].detach().numpy() for i in range(len(imgs))]
         
         batch_pred_label = np.zeros(self.opt.batch_size)
         
@@ -151,6 +172,7 @@ class HumanDetection:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument("--use_cuda", type=int, default=-1, help="-1 not use cuda, otherwise is the cuda idx, from 0 to 3")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size for dataloader")
     parser.add_argument("--num_workers", type=int, default=2, help="Number of workers")
     parser.add_argument("--data_path", type=str, help="Path to save the images")
