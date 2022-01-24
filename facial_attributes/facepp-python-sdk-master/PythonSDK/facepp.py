@@ -5,7 +5,7 @@ usage:
     api = API(key, secret)
     api.detect(img = File('/tmp/test.jpg'))
 """
-
+import cv2
 import sys
 import socket
 import json
@@ -44,7 +44,12 @@ class File(object):
         """read image content"""
 
         if os.path.getsize(self.path) > 2 * 1024 * 1024:
-            raise APIError(-1, None, 'image file size too large')
+            print("image file size too large and need to resize")
+            img = cv2.imread(self.path)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            img = cv2.resize(img, (1024, 1024))
+            _, img_arr = cv2.imencode(".jpg", img)
+            self.content = img_arr.tobytes()
         else:
             with open(self.path, 'rb') as f:
                 self.content = f.read()
