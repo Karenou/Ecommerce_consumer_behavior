@@ -9,7 +9,24 @@ This repo is forked from [**FairFace: Face Attribute Dataset for Balanced Race, 
 - Required packages
     - pytorch1.10
     - dlib
-    - numpy, pandas
+        - Compile dlib for GPU (need to use GNC version no more than 8)
+
+pip by default only install the cpu version of dlib, if need to deploy on cuda environment, need to install dlib from source. Please follow the below steps of installation.
+
+Since our environment by default use GNV version 9, need to specify the gcc-8 version, otherwise will have error when building the program. Also if there is error showing the cannot find cudnn, need to specify the folder where cudnn.h locates.
+
+```
+# install here ~/anaconda3/pkgs/dlib
+git clone https://github.com/davisking/dlib.git /anaconda3/pkgs
+cd dlib
+mkdir build
+cd build
+# test build: 
+CC=gcc-8 cmake .. -DDLIB_USE_CUDA=1 -DUSE_AVX_INSTRUCTIONS=1 -DCMAKE_PREFIX_PATH=/usr/local/cuda-11.2/targets/x86_64-linux/include
+cmake --build .
+# build and install
+python setup.py install --set USE_AVX_INSTRUCTIONS=1 --set DLIB_USE_CUDA=1 -set CUDA_HOST_COMPILER=/usr/bin/gcc-8 -set CMAKE_PREFIX_PATH=/usr/local/cuda-11.2/targets/x86_64-linux/include
+```
 
 - Model Architecture
 
