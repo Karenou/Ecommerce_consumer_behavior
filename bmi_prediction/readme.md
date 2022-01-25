@@ -3,14 +3,29 @@
     - The BMI Prediction refers to this [Github repo](https://github.com/atoms18/BMI-prediction-from-Human-Photograph)
     - The Self-Correction-Human-Parsing is cloned from this [Github repo](https://github.com/PeikeLi/Self-Correction-Human-Parsing). We modified the `simple_extractor.py` and `datasets/simple_extractor_dataset.py` accordingly for production purpose.
 
+- Environment
+    - cuda=11.3, cudnn=8.2.0
+
 - Required packages
-    - pytorch1.10
-    - tensorflow2.6.0, keras
+    - pytorch=1.10, 
+    - ninja=1.10.2
+        - installation
+        The model is deployed on cluster with GeForce RTX 3090 (sm_86) with nvidia driver version=470. Need to install ninja first, and lower the cuda architecture list to "7.5"
+        ```
+        pip install ninja
+        export TORCH_CUDA_ARCH_LIST="7.5"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda-11.2/lib64
+        ```
+    - tensorflow=2.5.0
     - cv2
 
 - How to Run the Program
 
-1. First get the processed images using `human_parsing.ipynb`
+1. First get the processed images using `human_parsing.ipynb`. Or input the following in terminal.
+
+```
+python Self-Correction-Human-Parsing/simple_extractor.py --dataset 'atr' --model-restore='Self-Correction-Human-Parsing/checkpoints/atr.pth' --input-dir='../../HKTVMall_data' --output-dir='process_images' --input_csv='../human_detection/result/frcnn_result.csv' --gpu=0 
+```
 
 2. Then start bmi prediction using the `bmi_prediction.ipynb`
 
