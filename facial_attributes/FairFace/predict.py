@@ -30,7 +30,7 @@ def rect_to_bb(rect):
 	return (x, y, w, h)
 
 def detect_face(base_load_path, image_ids,  base_save_path, 
-                default_max_size=800, size = 200, padding = 0.25, progress=10):
+                default_max_size=800, size = 200, padding = 0.25, progress=1000):
     """
     detect and crop the face region in each image
     @param base_load_path: base path of image folder
@@ -43,6 +43,7 @@ def detect_face(base_load_path, image_ids,  base_save_path,
     """
     # load pre-trained face detection and landmark extraction models
     cnn_face_detector = dlib.cnn_face_detection_model_v1('dlib_models/mmod_human_face_detector.dat')
+    # use shape_predictor_training_options to control num_threads and the tree structure
     sp = dlib.shape_predictor('dlib_models/shape_predictor_5_face_landmarks.dat') 
 
     # predict the progress per 1000 images
@@ -98,7 +99,7 @@ def index_to_category_name(result, col_name, feat_name, num_categories, name_lis
         result.loc[result[col_name] == index, feat_name] = name
     return result
 
-def predict_age_gender_race(use_cuda, save_path, model_path, num_races=4, imgs_path = 'detected_faces/', progress=10):
+def predict_age_gender_race(use_cuda, save_path, model_path, num_races=4, imgs_path = 'detected_faces/', progress=1000):
     """
     @param use_cuda: -1 for not use GPU, otherwise specify which cuda
     @param save_path: path to save prediction result csv
@@ -225,29 +226,35 @@ if __name__ == "__main__":
     parser.add_argument("--face_size", default=200, type=int, help="Size to crop detected human face")
     parser.add_argument("--num_races", default=4, type=int, help="Number of races")
     parser.add_argument("--model_path", type=str, help="Path to load the pretrain model")
-    parser.add_argument("--progress", default=20, type=int, help="Print progress for every n images")
+    parser.add_argument("--resume_idx", default=0, type=int, help="Image idx to resume the program")
+    parser.add_argument("--progress", default=2000, type=int, help="Print progress for every n images")
     parser.add_argument("--use_cuda", type=int, default=0, help="-1 not use cuda, otherwise is the cuda idx, from 0 to 3")
     args = parser.parse_args()
 
     print("torch CUDA available: %s" % torch.cuda.is_available())
-    if args.use_cuda == -1:
+    if args.use_cuda == -1 or dlib.cuda.get_num_devices() == 0:
         dlib.DLIB_USE_CUDA = False
         print("use cpu")
     else:
         dlib.DLIB_USE_CUDA = True
         print("using CUDA:%d" % args.use_cuda)
+        
     
     ensure_dir(args.face_path)
 
     pred_csv = pd.read_csv(args.input_csv)
     img_ids = pred_csv[pred_csv["pred_label"] == 1]["image_id"]
 
+    if args.resume_idx > 0:
+        img_ids = img_ids[img_ids >= args.resume_idx]
+
     start = time.time()
     print("detecting faces, saved at %s" % args.save_path)
     detect_face(args.input_path, img_ids, args.face_path, size=args.face_size, progress=args.progress)
 
     print("predicting age, gender and race")
-    predict_age_gender_race(args.use_cuda, args.save_path, args.model_path, num_races=args.num_races, imgs_path=args.face_path + '/', progress=args.progress)
+    predict_age_gender_race(args.use_cuda, args.save_path, args.model_path, num_races=args.num_races, 
+                            imgs_path=args.face_path + '/', progress=args.progress)
 
     end = time.time()
     print("Total time used: %.4f" % (end-start))
