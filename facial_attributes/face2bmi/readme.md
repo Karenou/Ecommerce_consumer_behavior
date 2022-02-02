@@ -23,4 +23,6 @@ Using the face images extracted in the `FairFace/detect_faces` folder, it applie
     python main.py --mode="train" --model_type="vgg16" --epochs=3 --batch_size=8 
     ```
     - Testing phase
+    ```
     python main.py --mode="test" --model_type="vgg16" --epochs=3 --batch_size=8 --image_path="../FairFace/detect_faces"
+    ```

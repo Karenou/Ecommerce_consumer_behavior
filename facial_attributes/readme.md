@@ -28,3 +28,23 @@ We extract the facial attributes including gender, age, female_score and male_sc
 ```
 python3 facepp-python-sdk-master/call.py
 ```
+
+## Face2BMI
+
+- Reference 
+
+This face2bmi is based on this (repo)[https://github.com/6chaoran/face2bmi] and the (Face-to-BMI paper)[https://arxiv.org/pdf/1703.03156.pdf]
+
+- Usage
+
+We predict the bmi, age, gender based on only face images extracted by **FairFace**.
+
+- How to run the program
+    - Training phase
+    ```
+    python main.py --mode="train" --model_type="vgg16" --epochs=3 --batch_size=8 
+    ```
+    - Testing phase
+    ```
+    python main.py --mode="test" --model_type="vgg16" --epochs=3 --batch_size=8 --image_path="../FairFace/detect_faces"
+    ```
