@@ -20,11 +20,11 @@ BMI, computed by weight / squared of height, is a key measure of body shape. We 
 
 As the number of images is huge and only a small subset of it contains human body. To reduce computation cost, we first applied a human body detection model using [Faster R-CNN](human_detection/frcnn.py) to mark the images with human body. 
 
-After that, we passed the marked images to a [human parsing model](bmi_prediction/Self-Correction-Human-Parsing/simple_extractor.py) and cropped the human shape, which then passed into the [BMI prediction model](bmi_prediction/bmi_prediction.py) and got the final prediction.
+After that, we passed the marked images to a [human parsing model](bmi_prediction/Self-Correction-Human-Parsing) and cropped the human shape, which then passed into the [BMI prediction model](bmi_prediction/bmi_prediction.py) and got the final prediction.
 
 - Approach Two - Facial Images
 
-Using the dlib package to identify the facial region and crop the face images, we also applied the [VGGFace model](facial_attributes/face2bmi/models.py) to predict the BMI from facial images as a supplementary reference.
+Using the dlib package to identify the facial region and crop the face images, we also applied the [VGGFace model](facial_attributes/face2bmi) to predict the BMI from facial images as a supplementary reference.
 
 ### Facial Attributes
 
