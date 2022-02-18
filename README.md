@@ -41,7 +41,7 @@ To predict the age and quantify the facial attractiveness, we leveraged on the [
 
 ### Cloth Attributes
 
-The visual styles of cloth images may also have an impact on consumers' behavior. We used [mmfashion](https://github.com/open-mmlab/mmfashion), an open source visual fashion analysis toolbox, to predict the probabilities of a selective subset of 542 cloth attributes.
+The visual styles of cloth images may also have an impact on consumers' behavior. We used [mmfashion](https://github.com/Karenou/mmfashion), an open source visual fashion analysis toolbox, to predict the probabilities of a selective subset of 542 cloth attributes.
 
 ### Image Quality Assessment
 
