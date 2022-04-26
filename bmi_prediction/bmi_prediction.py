@@ -71,7 +71,6 @@ def read_image(image_path, process_image_path, image_ids, input_shape=(224,224,3
     """
     print("---------Read images")
     input_images = []
-    print(image_ids)
     for image_id in image_ids:
         # load raw input image
         raw_input_image = cv2.imread("%s/%d.jpg" % (image_path, image_id))
@@ -111,11 +110,11 @@ if __name__ == "__main__":
 
     # load image_ids that are detected to contain human body
     human_detect_res = pd.read_csv(args.input_csv)
-    image_ids = human_detect_res["image_id"]
+    image_ids = human_detect_res[human_detect_res["pred_label"] == 1]["image_id"]
 
     image_base_path = args.image_path
     process_image_path = args.process_image_path
-    batch_size = 32
+    batch_size = 8
     input_shape = (224, 224, 3)
 
     start = time.time()
@@ -133,7 +132,7 @@ if __name__ == "__main__":
 
     # load and preprocess images, save result every 10 batches
     n_batch = math.ceil(len(image_ids) / batch_size)
-    bmi_df = human_detect_res[["image_id", "detect_body"]].copy()
+    bmi_df = human_detect_res[human_detect_res["pred_label"] == 1].reset_index(drop=True).copy()
     bmi_pred = np.zeros(shape=(len(image_ids), 1))
 
     print("---------Load model")
@@ -142,7 +141,7 @@ if __name__ == "__main__":
                                             custom_objects= {'coeff_determination': coeff_determination}
                                         )
 
-    for i in range(args.resume_idx, n_batch):
+    for i in range(args.resume_idx, 1):
         print("---------Batch %d, Process %d/%d" % (i, i * batch_size, len(image_ids)))
         if i != n_batch - 1:
             input_images = read_image(image_base_path, process_image_path, image_ids[i*batch_size:(i+1)*batch_size], input_shape)
@@ -168,9 +167,7 @@ if __name__ == "__main__":
         if not os.path.exists("result"):
             os.makedirs("result")
 
-        if i % 25 == 0:
-            print("---------Save intermediate prediction")
-            bmi_df.to_csv("result/bmi_pred.csv", index=False)
-
+    bmi_df.to_csv("result/bmi_pred.csv", index=False)
+    
     end = time.time()
     print("Total time used: %.2f" % (end-start))
