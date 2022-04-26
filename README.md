@@ -46,3 +46,46 @@ The visual styles of cloth images may also have an impact on consumers' behavior
 ### Image Quality Assessment
 
 To control the visual quality, we also computed the technical and aesthetic scores for each image, using the implementation of [NIMA: Neural Image Assessment](https://github.com/idealo/image-quality-assessment).
+
+- install docker
+
+- build image
+
+```
+sudo docker service start
+
+sudo docker build -t nima-cpu . -f Dockerfile.cpu
+```
+
+- set cpu limit
+
+```
+# change in predict
+BASENAME_IS=`basename $IMAGE_SOURCE`
+# run predictions
+DOCKER_RUN="docker run -it --cpus 5
+  --entrypoint entrypoints/entrypoint.predict.cpu.sh \
+  -v "$IMAGE_SOURCE":/src/$BASENAME_IS
+  -v "$WEIGHTS_FILE":/src/weights.hdf5
+  -v "$PREDICTIONS_FILE":/src/pred_scores.json
+  $DOCKER_IMAGE $BASE_MODEL_NAME /src/weights.hdf5 /src/$BASENAME_IS /src/pred_scores.json"
+```
+
+- set image-source in run.sh, save output in txt file
+
+```
+# change image-source
+./predict  \
+	--docker-image nima-gpu \
+	--base-model-name MobileNet \
+	--weights-file $(pwd)/models/MobileNet/weights_mobilenet_technical_0.11.hdf5 \
+	--image-source /home/juneshi/Desktop/Image \
+	--predictions-files $(pwd)/result/technical_scores.json
+
+# save output to txt file
+./run.sh > file_path.txt
+```
+
+- convert txt to csv
+
+change file paths and skip_rows parameter in txt_to_csv.py
