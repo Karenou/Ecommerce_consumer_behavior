@@ -12,6 +12,9 @@ from keras import backend as K
 from keras.preprocessing import image
 import argparse
 
+configuration = tf.compat.v1.ConfigProto()
+configuration.gpu_options.allow_growth = True
+session = tf.compat.v1.Session(config=configuration)
 
 def load_base_model(input_shape=(224, 224, 3)):
     """
@@ -71,11 +74,18 @@ def read_image(image_path, process_image_path, image_ids, input_shape=(224,224,3
     """
     print("---------Read images")
     input_images = []
-    for image_id in image_ids:
+    # for filter corrupted image
+    corrupt_imgs = []
+    for idx, image_id in enumerate(image_ids):
         # load raw input image
-        raw_input_image = cv2.imread("%s/%d.jpg" % (image_path, image_id))
-        raw_input_image = cv2.cvtColor(raw_input_image, cv2.COLOR_BGR2RGB)
-        raw_input_image = cv2.resize(raw_input_image, (input_shape[0], input_shape[1]))
+        try:
+            raw_input_image = cv2.imread("%s/%d.jpg" % (image_path, image_id))
+            raw_input_image = cv2.cvtColor(raw_input_image, cv2.COLOR_BGR2RGB)
+            raw_input_image = cv2.resize(raw_input_image, (input_shape[0], input_shape[1]))
+        except cv2.error:
+            print("%d.jpg is corrupted, skip this image." % image_id)
+            corrupt_imgs.append(idx)
+            continue
 
         # load processed image after human parsing
         preprocessed_input_image = image.load_img(
@@ -90,7 +100,7 @@ def read_image(image_path, process_image_path, image_ids, input_shape=(224,224,3
 
         input_images.append(raw_input_image * preprocessed_input_image)
     
-    return np.array(input_images)
+    return np.array(input_images), corrupt_imgs
 
 def coeff_determination(y_true, y_pred):
     SS_res =  K.sum(K.square( y_true-y_pred )) 
@@ -98,12 +108,32 @@ def coeff_determination(y_true, y_pred):
     return ( 1 - SS_res/(SS_tot + K.epsilon()) )
 
 
+def skip_corrupt_pred(pred, corrupt_imgs_idx, batch_size=8):
+    """
+    set the predicted bmi for corrupted image to 0
+    ensure the size of final bmi predict is (batch_size, 1)
+    @param pred: model prediction, size (batch_size - len(corrupt_imgs_idx), 1)
+    @param corrupt_imgs_idx: a list of currpt imgs index in batch
+    """
+    final_pred = np.zeros((batch_size, 1))
+    j, k = 0, 0
+    for i in range(batch_size):
+        if j < len(corrupt_imgs_idx) and i == corrupt_imgs_idx[j]:
+            j += 1
+            continue
+        else:
+            final_pred[i] = pred[k]
+            k += 1
+    return final_pred
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input_csv", type=str, help="Path of human detection result csv")
-    parser.add_argument("--image_path", type=str, help="Base path to save raw input images")
-    parser.add_argument("--process_image_path", type=str, help="Base path to save the images of detected faces")
-    parser.add_argument("--model_path", type=str, help="Path to load the pretrain model")
+    parser.add_argument("--input_csv", type=str, required=True, help="Path of human detection result csv")
+    parser.add_argument("--image_path", type=str, required=True, help="Base path to save raw input images")
+    parser.add_argument("--process_image_path", type=str, required=True, help="Base path to save the images of detected faces")
+    parser.add_argument("--model_path", type=str, required=True, help="Path to load the pretrain model")
+    parser.add_argument("--output_csv", type=str, required=True, help="Path to save output bmi_pred csv")
     parser.add_argument("--use_cuda", type=int, default=0, help="which cuda to use")
     parser.add_argument("--resume_idx", type=int, default=0, help="resume batch idx")
     args = parser.parse_args()
@@ -141,13 +171,13 @@ if __name__ == "__main__":
                                             custom_objects= {'coeff_determination': coeff_determination}
                                         )
 
-    for i in range(args.resume_idx, 1):
+    for i in range(args.resume_idx, n_batch):
         print("---------Batch %d, Process %d/%d" % (i, i * batch_size, len(image_ids)))
         if i != n_batch - 1:
-            input_images = read_image(image_base_path, process_image_path, image_ids[i*batch_size:(i+1)*batch_size], input_shape)
+            input_images, corrupt_imgs = read_image(image_base_path, process_image_path, image_ids[i*batch_size:(i+1)*batch_size], input_shape)
             n_images = len(image_ids[i*batch_size:(i+1)*batch_size])
         else:
-            input_images = read_image(image_base_path, process_image_path, image_ids[i*batch_size:], input_shape)
+            input_images, corrupt_imgs = read_image(image_base_path, process_image_path, image_ids[i*batch_size:], input_shape)
             n_images = len(image_ids[i*batch_size:])
 
         # extract features using ResNet152 base_model
@@ -156,6 +186,10 @@ if __name__ == "__main__":
         # predict bmi using pretrained model
         print("---------Predicting BMI")
         preds = model.predict(features)
+
+        # set corrupt images' bmi prediction as 0
+        if len(corrupt_imgs) > 0:
+            preds = skip_corrupt_pred(preds, corrupt_imgs, batch_size=batch_size)
 
         if i != n_batch - 1:
             bmi_pred[i*batch_size:(i+1)*batch_size] = preds
@@ -167,7 +201,7 @@ if __name__ == "__main__":
         if not os.path.exists("result"):
             os.makedirs("result")
 
-    bmi_df.to_csv("result/bmi_pred.csv", index=False)
+    bmi_df.to_csv(args.output_csv, index=False)
     
     end = time.time()
     print("Total time used: %.2f" % (end-start))
