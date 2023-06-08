@@ -6,7 +6,7 @@ This repo is part of the code implementation for a research project about Ecomme
 
 The project aims at investigating how the idea of body shaming subconsciously affects consumer's behavior when they are browsing or purchsing on the Ecommerce platform.
 
-It contains the source code used in the paper **How Do Fast Fashion Copycats Affect the Popularity of Premium Brands? Evidence from Social Media**, published in [Journal of Market Research, March 2023](https://repository.hkust.edu.hk/ir/Record/1783.1-125655).
+It contains the source code used in the paper [**How Do Fast Fashion Copycats Affect the Popularity of Premium Brands? Evidence from Social Media**](https://repository.hkust.edu.hk/ir/Record/1783.1-125655), published in Journal of Market Research, March 2023.
 
 ## Data Source
 
