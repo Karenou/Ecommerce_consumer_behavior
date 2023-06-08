@@ -6,6 +6,9 @@ This repo is part of the code implementation for a research project about Ecomme
 
 The project aims at investigating how the idea of body shaming subconsciously affects consumer's behavior when they are browsing or purchsing on the Ecommerce platform.
 
+## Publications
+The work is published in [Journal of Market Research, March 2023](https://repository.hkust.edu.hk/ir/Record/1783.1-125655).
+
 ## Data Source
 
 To identify the effect of body shaming on Ecommerce, we obtained product info, sales, text and image data, customer traffic data from [HKTV Mall](https://opendatabank.hktvmall.com/portal/home), the largest Ecommerce player in HK. The data contains about 100k SKUs and over 470k images.
